@@ -1,0 +1,27 @@
+name: Run Jenkins Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  run-jenkins:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Jenkins Pipeline
+        uses: jenkinsci/jenkinsfile-runner-action@master
+        with:
+          jenkinsfile: Jenkinsfile
+          plugins: |
+            workflow-aggregator
+            git
+            configuration-as-code
+          jenkins_home: /var/jenkins_home
+          jenkins_war: /usr/share/jenkins/jenkins.war
+          jenkins_version: 2.426.1.3 

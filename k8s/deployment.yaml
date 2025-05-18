@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dockerfile-generator
+  labels:
+    app: dockerfile-generator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dockerfile-generator
+  template:
+    metadata:
+      labels:
+        app: dockerfile-generator
+    spec:
+      containers:
+      - name: dockerfile-generator
+        image: dockerfile-generator:latest
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 20 
