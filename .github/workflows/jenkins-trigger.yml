@@ -37,6 +37,32 @@ jobs:
                     echo 'Jenkins is up!' && \
                     sleep 30 && \
                     JENKINS_PASSWORD=\$(cat /var/jenkins_home/secrets/initialAdminPassword) && \
+                    echo 'Setting up Jenkins...' && \
+                    curl -X POST http://localhost:8080/setupWizard/configureInstance \
+                    --user admin:\$JENKINS_PASSWORD \
+                    --data-urlencode 'rootUrl=http://localhost:8080/' \
+                    --data-urlencode 'jenkinsUrl=http://localhost:8080/' \
+                    --data-urlencode 'jenkinsUrlDescription=Jenkins' \
+                    -H 'Content-Type: application/x-www-form-urlencoded' && \
+                    echo 'Installing required plugins...' && \
+                    curl -X POST http://localhost:8080/pluginManager/installNecessaryPlugins \
+                    --user admin:\$JENKINS_PASSWORD \
+                    --data-urlencode 'plugin=workflow-job' \
+                    --data-urlencode 'plugin=workflow-cps' \
+                    --data-urlencode 'plugin=workflow-basic-steps' \
+                    --data-urlencode 'plugin=workflow-durable-task-step' \
+                    --data-urlencode 'plugin=workflow-api' \
+                    --data-urlencode 'plugin=workflow-support' \
+                    --data-urlencode 'plugin=workflow-scm-step' \
+                    --data-urlencode 'plugin=workflow-step-api' \
+                    --data-urlencode 'plugin=workflow-cps-global-lib' \
+                    --data-urlencode 'plugin=workflow-aggregator' \
+                    -H 'Content-Type: application/x-www-form-urlencoded' && \
+                    echo 'Restarting Jenkins...' && \
+                    curl -X POST http://localhost:8080/safeRestart \
+                    --user admin:\$JENKINS_PASSWORD && \
+                    echo 'Waiting for Jenkins to restart...' && \
+                    sleep 30 && \
                     echo 'Creating API token...' && \
                     API_TOKEN=\$(curl -X POST --user admin:\$JENKINS_PASSWORD http://localhost:8080/user/admin/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken \
                     --data-urlencode 'newTokenName=github-actions' \
