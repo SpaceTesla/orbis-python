@@ -44,4 +44,8 @@ jobs:
                     -H 'Content-Type: application/xml' && \
                     echo 'Triggering Jenkins job...' && \
                     curl -X POST http://localhost:8080/job/dockerfile-generator/build \
+                    --user admin:\$JENKINS_PASSWORD && \
+                    echo 'Waiting for job completion...' && \
+                    sleep 30 && \
+                    curl -s http://localhost:8080/job/dockerfile-generator/lastBuild/consoleText \
                     --user admin:\$JENKINS_PASSWORD" 
