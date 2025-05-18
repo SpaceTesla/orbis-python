@@ -5,8 +5,9 @@ pipeline {
         stage('Setup') {
             steps {
                 sh '''
-                    python3 -m pip install --upgrade pip
-                    pip3 install pytest
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install pytest
                 '''
             }
         }
@@ -14,6 +15,7 @@ pipeline {
         stage('Test') {
             steps {
                 sh '''
+                    . venv/bin/activate
                     echo "Running tests..."
                     pytest tests/test_dockerfile_generator.py -v
                 '''

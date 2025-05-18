@@ -26,9 +26,14 @@ jobs:
             -w /workspace \
             jenkins/jenkins:lts-jdk11 \
             bash -c "apt-get update && \
-                    apt-get install -y python3 python3-pip && \
-                    pip3 install pytest && \
+                    apt-get install -y python3 python3-pip python3-venv && \
+                    python3 -m venv /workspace/venv && \
+                    . /workspace/venv/bin/activate && \
+                    pip install pytest && \
                     java -jar /usr/share/jenkins/jenkins.war -httpPort=8080 & \
-                    sleep 30 && \
+                    echo 'Waiting for Jenkins to start...' && \
+                    while ! curl -s http://localhost:8080 > /dev/null; do sleep 1; done && \
+                    echo 'Jenkins is up!' && \
+                    sleep 10 && \
                     curl -X POST http://localhost:8080/job/dockerfile-generator/build \
                     --user admin:$(cat /run/secrets/additional/secrets-store/additional/initialAdminPassword)" 
