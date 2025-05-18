@@ -1,21 +1,12 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.11-slim'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
-    
-    environment {
-        DOCKER_BUILDKIT = '1'
-    }
+    agent any
     
     stages {
         stage('Setup') {
             steps {
                 sh '''
-                    python -m pip install --upgrade pip
-                    pip install pytest
+                    python3 -m pip install --upgrade pip
+                    pip3 install pytest
                 '''
             }
         }
@@ -33,12 +24,6 @@ pipeline {
     post {
         always {
             cleanWs()
-        }
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed!'
         }
     }
 } 
