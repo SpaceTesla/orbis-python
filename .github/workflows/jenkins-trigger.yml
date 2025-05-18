@@ -35,21 +35,21 @@ jobs:
                     echo 'Waiting for Jenkins to start...' && \
                     while ! curl -s http://localhost:8080 > /dev/null; do sleep 1; done && \
                     echo 'Jenkins is up!' && \
-                    sleep 10 && \
+                    sleep 30 && \
                     JENKINS_PASSWORD=\$(cat /var/jenkins_home/secrets/initialAdminPassword) && \
-                    echo 'Getting Jenkins crumb...' && \
-                    CRUMB=\$(curl -s --user admin:\$JENKINS_PASSWORD 'http://localhost:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)') && \
+                    echo 'Creating API token...' && \
+                    API_TOKEN=\$(curl -X POST --user admin:\$JENKINS_PASSWORD http://localhost:8080/user/admin/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken \
+                    --data-urlencode 'newTokenName=github-actions' \
+                    -H 'Content-Type: application/x-www-form-urlencoded' | jq -r '.data.tokenValue') && \
                     echo 'Creating Jenkins job...' && \
                     curl -X POST http://localhost:8080/createItem?name=dockerfile-generator \
-                    --user admin:\$JENKINS_PASSWORD \
-                    -H \"\$CRUMB\" \
+                    --user admin:\$API_TOKEN \
                     --data-binary @/workspace/Jenkinsfile \
                     -H 'Content-Type: application/xml' && \
                     echo 'Triggering Jenkins job...' && \
                     curl -X POST http://localhost:8080/job/dockerfile-generator/build \
-                    --user admin:\$JENKINS_PASSWORD \
-                    -H \"\$CRUMB\" && \
+                    --user admin:\$API_TOKEN && \
                     echo 'Waiting for job completion...' && \
                     sleep 30 && \
                     curl -s http://localhost:8080/job/dockerfile-generator/lastBuild/consoleText \
-                    --user admin:\$JENKINS_PASSWORD" 
+                    --user admin:\$API_TOKEN" 
