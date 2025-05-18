@@ -6,17 +6,26 @@ pipeline {
         }
     }
     
+    environment {
+        DOCKER_BUILDKIT = '1'
+    }
+    
     stages {
         stage('Setup') {
             steps {
-                sh 'python -m pip install --upgrade pip'
-                sh 'pip install pytest'
+                sh '''
+                    python -m pip install --upgrade pip
+                    pip install pytest
+                '''
             }
         }
         
         stage('Test') {
             steps {
-                sh 'pytest tests/test_dockerfile_generator.py -v'
+                sh '''
+                    echo "Running tests..."
+                    pytest tests/test_dockerfile_generator.py -v
+                '''
             }
         }
     }
@@ -24,6 +33,12 @@ pipeline {
     post {
         always {
             cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 } 

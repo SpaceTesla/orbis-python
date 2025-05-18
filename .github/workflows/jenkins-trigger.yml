@@ -20,8 +20,17 @@ jobs:
       - name: Run Jenkins Pipeline
         run: |
           docker run --rm \
+            -u root \
             -v $(pwd):/workspace \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -w /workspace \
             jenkins/jenkins:lts-jdk11 \
-            bash -c "apt-get update && apt-get install -y python3 python3-pip && pip3 install pytest && pytest tests/test_dockerfile_generator.py -v" 
+            bash -c "apt-get update && \
+                    apt-get install -y python3 python3-pip && \
+                    pip3 install pytest && \
+                    jenkins-plugin-cli --plugins workflow-aggregator:latest && \
+                    jenkins-plugin-cli --plugins git:latest && \
+                    jenkins-plugin-cli --plugins configuration-as-code:latest && \
+                    java -jar /usr/share/jenkins/jenkins.war -httpPort=8080 & \
+                    sleep 30 && \
+                    jenkins-jobs --conf /etc/jenkins_jobs/jenkins_jobs.ini update /workspace/Jenkinsfile" 
