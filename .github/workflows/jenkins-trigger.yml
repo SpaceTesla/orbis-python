@@ -31,7 +31,7 @@ jobs:
                     . /workspace/venv/bin/activate && \
                     pip install pytest && \
                     export JENKINS_OPTS='-Dhudson.security.csrf.GlobalCrumbIssuerConfiguration.DISABLE_CSRF_PROTECTION=true' && \
-                    java -jar /usr/share/jenkins/jenkins.war \$JENKINS_OPTS -httpPort=8080 & \
+                    java -jar /usr/share/jenkins/jenkins.war --httpPort=8080 \$JENKINS_OPTS & \
                     echo 'Waiting for Jenkins to start...' && \
                     while ! curl -s http://localhost:8080 > /dev/null; do sleep 1; done && \
                     echo 'Jenkins is up!' && \
