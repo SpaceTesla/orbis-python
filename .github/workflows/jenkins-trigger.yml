@@ -26,7 +26,7 @@ jobs:
             -w /workspace \
             jenkins/jenkins:lts-jdk11 \
             bash -c "apt-get update && \
-                    apt-get install -y python3 python3-pip python3-venv curl && \
+                    apt-get install -y python3 python3-pip python3-venv curl jq && \
                     python3 -m venv /workspace/venv && \
                     . /workspace/venv/bin/activate && \
                     pip install pytest && \
@@ -37,14 +37,18 @@ jobs:
                     echo 'Jenkins is up!' && \
                     sleep 10 && \
                     JENKINS_PASSWORD=\$(cat /var/jenkins_home/secrets/initialAdminPassword) && \
+                    echo 'Getting Jenkins crumb...' && \
+                    CRUMB=\$(curl -s --user admin:\$JENKINS_PASSWORD 'http://localhost:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)') && \
                     echo 'Creating Jenkins job...' && \
                     curl -X POST http://localhost:8080/createItem?name=dockerfile-generator \
                     --user admin:\$JENKINS_PASSWORD \
+                    -H \"\$CRUMB\" \
                     --data-binary @/workspace/Jenkinsfile \
                     -H 'Content-Type: application/xml' && \
                     echo 'Triggering Jenkins job...' && \
                     curl -X POST http://localhost:8080/job/dockerfile-generator/build \
-                    --user admin:\$JENKINS_PASSWORD && \
+                    --user admin:\$JENKINS_PASSWORD \
+                    -H \"\$CRUMB\" && \
                     echo 'Waiting for job completion...' && \
                     sleep 30 && \
                     curl -s http://localhost:8080/job/dockerfile-generator/lastBuild/consoleText \
