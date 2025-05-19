@@ -3,6 +3,7 @@ import json
 import shutil
 import zipfile
 from tempfile import mkdtemp
+import tempfile
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.responses import JSONResponse, FileResponse
@@ -153,7 +154,7 @@ async def generate_docker(file: UploadFile = File(...)):
 
     temp_dir = mkdtemp()
     try:
-        extract_zip(file, temp_dir)
+        await extract_zip(file, temp_dir)
         project_path = find_project_root(temp_dir)
         project_type = detect_project_type(project_path)
 
@@ -177,7 +178,7 @@ async def generate_k8s(file: UploadFile = File(...)):
 
     temp_dir = mkdtemp()
     try:
-        extract_zip(file, temp_dir)
+        await extract_zip(file, temp_dir)
         project_path = find_project_root(temp_dir)
         project_type = detect_project_type(project_path)
 
@@ -197,7 +198,7 @@ async def export(file: UploadFile = File(...), deployment_type: str = Query("doc
 
     temp_dir = mkdtemp()
     try:
-        extract_zip(file, temp_dir)
+        await extract_zip(file, temp_dir)
         project_path = find_project_root(temp_dir)
         project_type = detect_project_type(project_path)
 
@@ -235,11 +236,25 @@ async def export(file: UploadFile = File(...), deployment_type: str = Query("doc
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
+@app.get("/")
+async def health_check():
+    return {"status": "healthy"}
+
 # Utility functions
 
-def extract_zip(upload_file, extract_to):
-    with zipfile.ZipFile(upload_file.file, 'r') as zip_ref:
-        zip_ref.extractall(extract_to)
+async def extract_zip(upload_file, extract_to):
+    # Ensure the file is at the beginning
+    await upload_file.seek(0)
+    # Create a temporary file to handle the upload
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        # Copy the contents of the uploaded file to the temporary file
+        shutil.copyfileobj(upload_file.file, temp_file)
+        temp_file.flush()
+        # Now use the temporary file to extract the zip
+        with zipfile.ZipFile(temp_file.name, 'r') as zip_ref:
+            zip_ref.extractall(extract_to)
+    # Clean up the temporary file
+    os.unlink(temp_file.name)
 
 def find_project_root(base_dir):
     for root, dirs, files in os.walk(base_dir):
