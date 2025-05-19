@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.10-slim'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any
     
     environment {
         DOCKER_IMAGE = 'orbis-python'
@@ -15,7 +10,7 @@ pipeline {
         stage('Setup') {
             steps {
                 sh '''
-                    python -m venv venv
+                    python -m venv venv || python3 -m venv venv
                     . venv/bin/activate
                     pip install -r requirements.txt
                     pip install pytest pytest-asyncio
@@ -35,20 +30,9 @@ pipeline {
         
         stage('Build Docker Image') {
             steps {
-                script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
-                }
-            }
-        }
-        
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    // Uncomment and configure these lines when you have a Docker registry
-                    // docker.withRegistry('https://your-registry.com', 'docker-credentials') {
-                    //     docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
-                    // }
-                }
+                sh '''
+                    docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                '''
             }
         }
         
